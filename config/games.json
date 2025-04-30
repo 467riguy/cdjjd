@@ -25,9 +25,9 @@
     "title": "60 seconds burger run"
   },
   {
-    "link": "projects/adrenalinechallenge/index.html",
-    "imgSrc": "projects/adrenalinechallenge/adrenalinechallenge.jpg",
-    "title": "Adrenaline Challenge"
+    "link": "projects/CSGO/index.html",
+    "imgSrc": "projects/adrenalinechallenge/csgo.png",
+    "title": "CSGO Clicker"
   },
   {
     "link": "projects/among-us/index.html",
@@ -35,8 +35,8 @@
     "title": "Among Us"
   },
   {
-    "link": "projects/avalanche/index.html",
-    "imgSrc": "projects/avalanche/avalanche.png",
+    "link": "projects//",
+    "imgSrc": "projects/aval/avalanche.png",
     "title": "Avalanche"
   },
   {
