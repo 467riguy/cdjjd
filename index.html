@@ -22,27 +22,50 @@
       background-position: 1rem center;
       padding-left: 3rem;
     }
+    /* intro animations */
+    @keyframes fadeInUp {
+      0% { opacity: 0; transform: translateY(20px); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
+    .intro-animate { opacity: 0; animation: fadeInUp 0.8s ease forwards; }
+    .intro-delay-1 { animation-delay: 0.2s; }
+    .intro-delay-2 { animation-delay: 0.4s; }
+    .intro-delay-3 { animation-delay: 0.6s; }
+    .intro-delay-4 { animation-delay: 0.8s; }
+    .intro-delay-5 { animation-delay: 1s; }
   </style>
 </head>
 <body class="bg-black text-gray-300 flex flex-col items-center min-h-screen p-4 pb-32">
   <audio id="player"></audio>
 
   <div class="w-full max-w-4xl mx-auto">
+    <!-- Header -->
     <header class="text-center mb-8">
-      <h1 class="text-4xl font-bold text-white">Lockdown Music</h1>
-      <p class="text-red-500">Your go-to music site (beta)</p>
-      <div class="mt-6 max-w-lg mx-auto">
-        <input id="search-bar" type="search" placeholder="Search songs or artists..." class="w-full px-4 py-2 bg-zinc-800 text-white border-2 border-zinc-700 rounded-full focus:outline-none focus:border-red-600 transition-colors">
+      <h1 class="text-4xl font-bold text-white intro-animate">Lockdown Music</h1>
+      <p class="text-red-500 intro-animate intro-delay-1">Your go-to music site (beta)</p>
+      <div class="mt-6 max-w-lg mx-auto intro-animate intro-delay-2">
+        <input id="search-bar" type="search" placeholder="Search artists..." class="w-full px-4 py-2 bg-zinc-800 text-white border-2 border-zinc-700 rounded-full focus:outline-none focus:border-red-600 transition-colors">
       </div>
     </header>
 
-    <main id="song-list" class="grid grid-cols-1 md:grid-cols-3 gap-6"></main>
+    <!-- Artist list (default screen) -->
+    <section id="artist-list" class="grid grid-cols-1 md:grid-cols-3 gap-6"></section>
 
+    <!-- Song list (hidden until artist picked) -->
+    <main id="song-list" class="grid grid-cols-1 md:grid-cols-3 gap-6 hidden"></main>
+
+    <!-- Back button -->
+    <div class="text-center mt-6 hidden" id="back-btn">
+      <button class="px-4 py-2 bg-red-600 text-black rounded-full hover:bg-red-700 transition">⬅ Back to Artists</button>
+    </div>
+
+    <!-- Empty message -->
     <div id="empty-msg" class="text-center text-gray-400 mt-8 hidden">
-      <p class="text-xl">No songs found</p>
+      <p class="text-xl">No results found</p>
       <p>We’ll try to add it soon :)</p>
     </div>
 
+    <!-- Footer Player -->
     <footer class="fixed bottom-0 left-0 right-0 bg-zinc-900 border-t border-zinc-800 p-4">
       <div class="w-full max-w-4xl mx-auto grid grid-cols-3 items-center">
         <!-- left side (song info) -->
@@ -81,16 +104,25 @@
 
   <script>
     document.addEventListener('DOMContentLoaded', () => {
-      const songs = [
-        { title: "Hide", artist: "Juice WRLD ft. Seezyn", albumArt: "https://placehold.co/200x200/7f1d1d/fff?text=Hide", file: "music/Hide (feat. Seezyn) - Juice WRLD.mp3" },
-        { title: "placeholder", artist: "hi", albumArt: "https://placehold.co/200x200/991b1b/fff?text=Song+2", file: "https://www.free-stock-music.com/music/keys-of-moon-the-distant-sun.mp3" },
-        { title: "place", artist: "holder", albumArt: "https://placehold.co/200x200/b91c1c/fff?text=Song+3", file: "https://www.bensound.com/benso-slowmotion.mp3" }
-      ];
+      // SONG DATA grouped by artist
+      const library = {
+        "Juice WRLD": [
+          { title: "Hide (ft. Seezyn)", albumArt: "https://placehold.co/200x200/7f1d1d/fff?text=Hide", file: "music/Hide (feat. Seezyn) - Juice WRLD.mp3" }
+        ],
+        "Keys of Moon": [
+          { title: "The Distant Sun", albumArt: "https://placehold.co/200x200/991b1b/fff?text=Song+2", file: "https://www.free-stock-music.com/music/keys-of-moon-the-distant-sun.mp3" }
+        ],
+        "Bensound": [
+          { title: "Slowmotion", albumArt: "https://placehold.co/200x200/b91c1c/fff?text=Song+3", file: "https://www.bensound.com/benso-slowmotion.mp3" }
+        ]
+      };
 
       const player = document.getElementById('player');
-      const list = document.getElementById('song-list');
+      const artistList = document.getElementById('artist-list');
+      const songList = document.getElementById('song-list');
       const search = document.getElementById('search-bar');
       const emptyMsg = document.getElementById('empty-msg');
+      const backBtn = document.getElementById('back-btn');
 
       const playBtn = document.getElementById('play');
       const playIcon = document.getElementById('play-icon');
@@ -109,14 +141,56 @@
       const volume = document.getElementById('volume');
       const volIcon = document.getElementById('vol-icon');
 
+      let currentArtist = null;
+      let songs = [];
       let index = -1, playing = false;
 
-      // build song cards
+      // RENDER ARTIST LIST
+      function renderArtists() {
+        artistList.innerHTML = '';
+        Object.keys(library).forEach((artist, i) => {
+          const div = document.createElement('div');
+          div.className = `bg-zinc-900 p-6 rounded-lg border-2 border-transparent hover:border-red-600 transition cursor-pointer text-center intro-animate intro-delay-${i+2}`;
+          div.innerHTML = `
+            <ion-icon name="person-circle-outline" class="text-6xl text-red-600 mb-3"></ion-icon>
+            <h3 class="text-lg font-bold text-white">${artist}</h3>
+          `;
+          div.addEventListener('click', () => showSongs(artist));
+          artistList.appendChild(div);
+        });
+      }
+
+      // SHOW SONGS FOR SELECTED ARTIST
+      function showSongs(artist) {
+        currentArtist = artist;
+        songs = library[artist];
+        artistList.classList.add('hidden');
+        songList.classList.remove('hidden');
+        backBtn.classList.remove('hidden');
+        search.placeholder = "Search songs..."; // update search
+        renderSongs();
+      }
+
+      // GO BACK TO ARTIST VIEW
+      backBtn.addEventListener('click', () => {
+        songList.classList.add('hidden');
+        backBtn.classList.add('hidden');
+        artistList.classList.remove('hidden');
+        emptyMsg.classList.add('hidden');
+        songs = [];
+        currentArtist = null;
+        search.placeholder = "Search artists...";
+        search.value = "";
+        renderArtists();
+        refreshPlayer();
+      });
+
+      // RENDER SONG CARDS
       function renderSongs() {
-        list.innerHTML = '';
+        songList.innerHTML = '';
         songs.forEach((s, i) => {
           const div = document.createElement('div');
-          div.className = "song-card bg-zinc-900 p-4 rounded-lg border-2 border-transparent hover:border-red-600 transition cursor-pointer";
+          div.className = `song-card bg-zinc-900 p-4 rounded-lg border-2 border-transparent hover:border-red-600 transition cursor-pointer intro-animate intro-delay-${i+3}`;
           div.dataset.i = i;
           div.innerHTML = `
             <div class="relative">
@@ -126,12 +200,13 @@
               </button>
             </div>
             <h4 class="font-bold text-white truncate mt-2">${s.title}</h4>
-            <p class="text-sm text-gray-400">${s.artist}</p>`;
+            <p class="text-sm text-gray-400">${currentArtist}</p>`;
           div.addEventListener('click', () => startSong(i));
-          list.appendChild(div);
+          songList.appendChild(div);
         });
       }
 
+      // PLAYER FUNCTIONS
       function startSong(i) {
         if (i < 0 || i >= songs.length) return;
         index = i;
@@ -143,7 +218,7 @@
       }
 
       function togglePlay() {
-        if (index === -1) return startSong(0);
+        if (index === -1 && songs.length > 0) return startSong(0);
         playing ? player.pause() : player.play();
         playing = !playing;
         refreshPlayer();
@@ -151,10 +226,10 @@
 
       function refreshPlayer() {
         playIcon.name = playing ? 'pause' : 'play';
-        if (index !== -1) {
+        if (index !== -1 && songs.length > 0) {
           cover.src = songs[index].albumArt;
           titleEl.textContent = songs[index].title;
-          artistEl.textContent = songs[index].artist;
+          artistEl.textContent = currentArtist;
           playBtn.disabled = false;
         } else playBtn.disabled = true;
         prevBtn.disabled = index <= 0;
@@ -170,23 +245,37 @@
         return `${m}:${s<10?"0":""}${s}`;
       }
 
-      function searchSongs() {
+      // SEARCH (artists OR songs depending on view)
+      function searchHandler() {
         const term = search.value.toLowerCase();
         let found = false;
-        songs.forEach((s, i) => {
-          const card = list.children[i];
-          const visible = s.title.toLowerCase().includes(term) || s.artist.toLowerCase().includes(term);
-          card.style.display = visible ? 'block' : 'none';
-          if (visible) found = true;
-        });
+
+        if (!currentArtist) {
+          // searching artists
+          Array.from(artistList.children).forEach(card => {
+            const name = card.querySelector("h3").textContent.toLowerCase();
+            const visible = name.includes(term);
+            card.style.display = visible ? 'block' : 'none';
+            if (visible) found = true;
+          });
+        } else {
+          // searching songs of current artist
+          songs.forEach((s, i) => {
+            const card = songList.children[i];
+            const visible = s.title.toLowerCase().includes(term);
+            card.style.display = visible ? 'block' : 'none';
+            if (visible) found = true;
+          });
+        }
+
         emptyMsg.style.display = found ? 'none' : 'block';
       }
 
-      // events
+      // EVENTS
       playBtn.addEventListener('click', togglePlay);
       nextBtn.addEventListener('click', () => startSong(index+1));
       prevBtn.addEventListener('click', () => startSong(index-1));
-      search.addEventListener('input', searchSongs);
+      search.addEventListener('input', searchHandler);
 
       player.addEventListener('timeupdate', () => {
         if (!player.duration) return;
@@ -210,8 +299,8 @@
         volIcon.name = v === 0 ? 'volume-off-outline' : v < .5 ? 'volume-low-outline' : 'volume-medium-outline';
       });
 
-      // init
-      renderSongs();
+      // INIT
+      renderArtists();
       refreshPlayer();
     });
   </script>
