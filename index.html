@@ -47,7 +47,7 @@
     </header>
 
     <section id="artist-list" class="grid grid-cols-1 md:grid-cols-3 gap-6"></section>
-    <main id="album-list" class="hidden"></main>
+    <main id="song-list" class="grid grid-cols-1 md:grid-cols-3 gap-6 hidden"></main>
 
     <div class="text-center mt-6 hidden" id="back-btn">
       <button class="px-4 py-2 bg-red-600 text-black rounded-full hover:bg-red-700 transition">⬅ Back to Artists</button>
@@ -94,71 +94,59 @@
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       const library = {
-        "Juice WRLD": {
-          "Death Race for Love": [
-            { 
-              title: "Fast", 
-              albumArt: "https://placehold.co/200x200/991b1b/fff?text=Fast", 
-              file: "music/Fast - Juice WRLD.mp3" 
-            },
-            { 
-              title: "Who Shot Cupid", 
-              albumArt: "https://placehold.co/200x200/991b1b/fff?text=Who Shot Cupid",
-              file: "music/Who Shot Cupid - Juice WRLD.mp3" 
-            }
-          ],
-          "Legends Never Die": [
-            { 
-              title: "Already Dead", 
-              albumArt: "https://placehold.co/200x200/991b1b/fff?text=Already Dead", 
-              file: "music/Already Dead - Juice WRLD.mp3" 
-            },
-            { 
-              title: "From My Window", 
-              albumArt: "https://placehold.co/200x200/991b1b/fff?text=From My Window", 
-              file: "music/From My Window - Juice WRLD.mp3" 
-            }
-          ],
-          "Soundtrack Features": [
-            { 
-              title: "Hide (ft. Seezyn)", 
-              albumArt: "https://placehold.co/200x200/7f1d1d/fff?text=Hide", 
-              file: "music/Hide (feat. Seezyn) - Juice WRLD.mp3" 
-            }
-          ]
-        },
-        "Trippie Redd": {
-          "A Love Letter to You 4": [
-            { 
-              title: "Blastoff (ft. Juice WRLD)", 
-              albumArt: "https://placehold.co/200x200/991b1b/fff?text=Blastoff", 
-              file: "music/Blastoff (feat. Juice WRLD) - Internet Money.mp3" 
-            }
-          ]
-        },
-        "50 Cent": {
-          "Get Rich or Die Tryin’": [
-            { 
-              title: "Many Men (Wish Death)", 
-              albumArt: "https://placehold.co/200x200/b91c1c/fff?text=Many Men", 
-              file: "music/Many Men (Wish Death) - 50 Cent.mp3" 
-            }
-          ]
-        },
-        "Linkin Park": {
-          "Meteora": [
-            { 
-              title: "Breaking the Habit", 
-              albumArt: "https://placehold.co/200x200/b91c1c/fff?text=Breaking the Habit", 
-              file: "music/Breaking the Habit - Linkin Park.mp3" 
-            }
-          ]
-        }
+        "Juice WRLD": [
+          { 
+            title: "Hide (ft. Seezyn)", 
+            albumArt: "https://placehold.co/200x200/7f1d1d/fff?text=Hide", 
+            file: "music/Hide (feat. Seezyn) - Juice WRLD.mp3" 
+          },
+          { 
+            title: "Fast", 
+            albumArt: "https://placehold.co/200x200/991b1b/fff?text=Fast", 
+            file: "music/ - Fast - Juice WRLD.mp3" 
+          },
+          {
+            title: "Already Dead",
+            albumArt: "https://placehold.co/200x200/991b1b/fff?text=Already Dead",
+            file: "music/Already Dead - Juice WRLD.mp3"
+          },
+          {
+            title: "From My Window",
+            albumArt: "https://placehold.co/200x200/991b1b/fff?text=From My Window",
+            file: "music/SpotiDownloader.com - From My Window - Juice WRLD.mp3"
+          },
+          {
+            title: "Who Shot Cupid",
+            albumArt: "https://placehold.co/200x200/991b1b/fff?text=Who Shot Cupid",
+            file: "music/ Who Shot Cupid_  Juice WRLD.mp3"
+          },
+        ],
+        "Trippie Red": [
+          { 
+            title: "Blastoff (ft. Juice WRLD)", 
+            albumArt: "https://placehold.co/200x200/991b1b/fff?text=Blastoff", 
+            file: "music/Blastoff (feat. Juice WRLD) - Internet Money.mp3" 
+          }
+        ],
+        "50 Cent": [
+          { 
+            title: "Many Men (Wish Death)", 
+            albumArt: "https://placehold.co/200x200/b91c1c/fff?text=Many Men (Wish Death)", 
+            file: "music/- Many Men _Wish Death_ - 50 Cent.mp3" 
+          }
+        ],
+        "Linkin Park": [
+          {
+            title: "Breaking the Habit",
+            albumArt: "https://placehold.co/200x200/b91c1c/fff?text=Breaking the Habit",
+            file: "music/SpotiDown.App - Breaking the Habit - Linkin Park.mp3"
+          }
+        ]
       };
 
       const player = document.getElementById('player');
       const artistList = document.getElementById('artist-list');
-      const albumList = document.getElementById('album-list');
+      const songList = document.getElementById('song-list');
       const search = document.getElementById('search-bar');
       const emptyMsg = document.getElementById('empty-msg');
       const backBtn = document.getElementById('back-btn');
@@ -181,8 +169,7 @@
       const volIcon = document.getElementById('vol-icon');
 
       let currentArtist = null;
-      let currentAlbum = null;
-      let albums = {};
+      let songs = [];
       let index = -1, playing = false;
 
       function renderArtists() {
@@ -194,54 +181,58 @@
             <ion-icon name="person-circle-outline" class="text-6xl text-red-600 mb-3"></ion-icon>
             <h3 class="text-lg font-bold text-white">${artist}</h3>
           `;
-          div.addEventListener('click', () => showAlbums(artist));
+          div.addEventListener('click', () => showSongs(artist));
           artistList.appendChild(div);
         });
       }
 
-      function showAlbums(artist) {
+      function showSongs(artist) {
         currentArtist = artist;
-        albums = library[artist];
+        songs = library[artist];
         artistList.classList.add('hidden');
-        albumList.classList.remove('hidden');
+        songList.classList.remove('hidden');
         backBtn.classList.remove('hidden');
         search.placeholder = "Search songs...";
-        renderAlbums();
+        renderSongs();
       }
 
-      function renderAlbums() {
-        albumList.innerHTML = '';
-        Object.keys(albums).forEach(albumName => {
-          const albumDiv = document.createElement('div');
-          albumDiv.className = `bg-zinc-800 p-4 rounded-lg mb-6`;
-          albumDiv.innerHTML = `<h3 class="text-xl font-bold text-white mb-3">${albumName}</h3>`;
+      backBtn.addEventListener('click', () => {
+        songList.classList.add('hidden');
+        backBtn.classList.add('hidden');
+        artistList.classList.remove('hidden');
+        emptyMsg.classList.add('hidden');
+        songs = [];
+        currentArtist = null;
+        search.placeholder = "Search artists...";
+        search.value = "";
+        renderArtists();
+        refreshPlayer();
+      });
 
-          const grid = document.createElement('div');
-          grid.className = 'grid grid-cols-1 md:grid-cols-2 gap-4';
-
-          albums[albumName].forEach((s, j) => {
-            const div = document.createElement('div');
-            div.className = `song-card bg-zinc-900 p-4 rounded-lg border-2 border-transparent hover:border-red-600 transition cursor-pointer`;
-            div.dataset.i = j;
-            div.dataset.album = albumName;
-            div.innerHTML = `
+      function renderSongs() {
+        songList.innerHTML = '';
+        songs.forEach((s, i) => {
+          const div = document.createElement('div');
+          div.className = `song-card bg-zinc-900 p-4 rounded-lg border-2 border-transparent hover:border-red-600 transition cursor-pointer intro-animate intro-delay-${i+3}`;
+          div.dataset.i = i;
+          div.innerHTML = `
+            <div class="relative">
               <img src="${s.albumArt}" alt="${s.title}" class="w-full rounded-md shadow mb-3">
-              <h4 class="font-bold text-white truncate mt-2">${s.title}</h4>
-              <p class="text-sm text-gray-400">${albumName}</p>`;
-            div.addEventListener('click', () => startSong(albumName, j));
-            grid.appendChild(div);
-          });
-
-          albumDiv.appendChild(grid);
-          albumList.appendChild(albumDiv);
+              <button class="absolute bottom-2 right-2 bg-red-600 p-3 rounded-full opacity-0 group-hover:opacity-100 transition hover:scale-110">
+                <ion-icon name="play" class="text-2xl text-black"></ion-icon>
+              </button>
+            </div>
+            <h4 class="font-bold text-white truncate mt-2">${s.title}</h4>
+            <p class="text-sm text-gray-400">${currentArtist}</p>`;
+          div.addEventListener('click', () => startSong(i));
+          songList.appendChild(div);
         });
       }
 
-      function startSong(albumName, i) {
-        const song = albums[albumName][i];
-        if (!song) return;
-        currentAlbum = albumName;
+      function startSong(i) {
+        if (i < 0 || i >= songs.length) return;
         index = i;
+        const song = songs[i];
         player.src = song.file;
         player.play();
         playing = true;
@@ -249,7 +240,7 @@
       }
 
       function togglePlay() {
-        if (index === -1 && currentAlbum) return startSong(currentAlbum, 0);
+        if (index === -1 && songs.length > 0) return startSong(0);
         playing ? player.pause() : player.play();
         playing = !playing;
         refreshPlayer();
@@ -257,18 +248,17 @@
 
       function refreshPlayer() {
         playIcon.name = playing ? 'pause' : 'play';
-        if (index !== -1 && currentAlbum) {
-          const song = albums[currentAlbum][index];
-          cover.src = song.albumArt;
-          titleEl.textContent = song.title;
-          artistEl.textContent = `${currentArtist} - ${currentAlbum}`;
+        if (index !== -1 && songs.length > 0) {
+          cover.src = songs[index].albumArt;
+          titleEl.textContent = songs[index].title;
+          artistEl.textContent = currentArtist;
           playBtn.disabled = false;
         } else playBtn.disabled = true;
         prevBtn.disabled = index <= 0;
-        nextBtn.disabled = !currentAlbum || index >= albums[currentAlbum].length - 1;
+        nextBtn.disabled = index >= songs.length - 1;
 
         document.querySelectorAll('.song-card').forEach((c, i) => {
-          c.classList.toggle('playing', c.dataset.album === currentAlbum && parseInt(c.dataset.i) === index && playing);
+          c.classList.toggle('playing', i === index && playing);
         });
       }
 
@@ -289,36 +279,20 @@
             if (visible) found = true;
           });
         } else {
-          Object.keys(albums).forEach(albumName => {
-            albums[albumName].forEach((s, i) => {
-              const cards = albumList.querySelectorAll(`[data-album="${albumName}"]`);
-              const card = cards[i];
-              const visible = s.title.toLowerCase().includes(term) || albumName.toLowerCase().includes(term);
-              card.style.display = visible ? 'block' : 'none';
-              if (visible) found = true;
-            });
+          songs.forEach((s, i) => {
+            const card = songList.children[i];
+            const visible = s.title.toLowerCase().includes(term);
+            card.style.display = visible ? 'block' : 'none';
+            if (visible) found = true;
           });
         }
 
         emptyMsg.style.display = found ? 'none' : 'block';
       }
 
-      backBtn.addEventListener('click', () => {
-        albumList.classList.add('hidden');
-        backBtn.classList.add('hidden');
-        artistList.classList.remove('hidden');
-        emptyMsg.classList.add('hidden');
-        albums = {};
-        currentArtist = null;
-        search.placeholder = "Search artists...";
-        search.value = "";
-        renderArtists();
-        refreshPlayer();
-      });
-
       playBtn.addEventListener('click', togglePlay);
-      nextBtn.addEventListener('click', () => startSong(currentAlbum, index+1));
-      prevBtn.addEventListener('click', () => startSong(currentAlbum, index-1));
+      nextBtn.addEventListener('click', () => startSong(index+1));
+      prevBtn.addEventListener('click', () => startSong(index-1));
       search.addEventListener('input', searchHandler);
 
       player.addEventListener('timeupdate', () => {
@@ -329,7 +303,7 @@
       player.addEventListener('loadedmetadata', () => {
         timeTotal.textContent = fmtTime(player.duration);
       });
-      player.addEventListener('ended', () => startSong(currentAlbum, index+1));
+      player.addEventListener('ended', () => startSong(index+1));
 
       progressContainer.addEventListener('click', e => {
         if (index === -1) return;
