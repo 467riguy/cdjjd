@@ -46,11 +46,13 @@
       </div>
     </header>
 
+    <!-- Step views -->
     <section id="artist-list" class="grid grid-cols-1 md:grid-cols-3 gap-6"></section>
+    <section id="album-list" class="grid grid-cols-1 md:grid-cols-3 gap-6 hidden"></section>
     <main id="song-list" class="grid grid-cols-1 md:grid-cols-3 gap-6 hidden"></main>
 
     <div class="text-center mt-6 hidden" id="back-btn">
-      <button class="px-4 py-2 bg-red-600 text-black rounded-full hover:bg-red-700 transition">⬅ Back to Artists</button>
+      <button class="px-4 py-2 bg-red-600 text-black rounded-full hover:bg-red-700 transition">⬅ Back</button>
     </div>
 
     <div id="empty-msg" class="text-center text-gray-400 mt-8 hidden">
@@ -58,6 +60,7 @@
       <p>We’ll try to add it soon :)</p>
     </div>
 
+    <!-- Player -->
     <footer class="fixed bottom-0 left-0 right-0 bg-zinc-900 border-t border-zinc-800 p-4">
       <div class="w-full max-w-4xl mx-auto grid grid-cols-3 items-center">
         <div class="flex items-center space-x-3">
@@ -94,58 +97,39 @@
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       const library = {
-        "Juice WRLD": [
-          { 
-            title: "Hide (ft. Seezyn)", 
-            albumArt: "https://placehold.co/200x200/7f1d1d/fff?text=Hide", 
-            file: "music/Hide (feat. Seezyn) - Juice WRLD.mp3" 
-          },
-          { 
-            title: "Fast", 
-            albumArt: "https://placehold.co/200x200/991b1b/fff?text=Fast", 
-            file: "music/ - Fast - Juice WRLD.mp3" 
-          },
-          {
-            title: "Already Dead",
-            albumArt: "https://placehold.co/200x200/991b1b/fff?text=Already Dead",
-            file: "music/Already Dead - Juice WRLD.mp3"
-          },
-          {
-            title: "From My Window",
-            albumArt: "https://placehold.co/200x200/991b1b/fff?text=From My Window",
-            file: "music/SpotiDownloader.com - From My Window - Juice WRLD.mp3"
-          },
-          {
-            title: "Who Shot Cupid",
-            albumArt: "https://placehold.co/200x200/991b1b/fff?text=Who Shot Cupid",
-            file: "music/ Who Shot Cupid_  Juice WRLD.mp3"
-          },
-        ],
-        "Trippie Red": [
-          { 
-            title: "Blastoff (ft. Juice WRLD)", 
-            albumArt: "https://placehold.co/200x200/991b1b/fff?text=Blastoff", 
-            file: "music/Blastoff (feat. Juice WRLD) - Internet Money.mp3" 
-          }
-        ],
-        "50 Cent": [
-          { 
-            title: "Many Men (Wish Death)", 
-            albumArt: "https://placehold.co/200x200/b91c1c/fff?text=Many Men (Wish Death)", 
-            file: "music/- Many Men _Wish Death_ - 50 Cent.mp3" 
-          }
-        ],
-        "Linkin Park": [
-          {
-            title: "Breaking the Habit",
-            albumArt: "https://placehold.co/200x200/b91c1c/fff?text=Breaking the Habit",
-            file: "music/SpotiDown.App - Breaking the Habit - Linkin Park.mp3"
-          }
-        ]
+        "Juice WRLD": {
+          "Death Race for Love": [
+            { title: "Fast", albumArt: "https://placehold.co/200x200/991b1b/fff?text=Fast", file: "music/Fast - Juice WRLD.mp3" },
+            { title: "Who Shot Cupid", albumArt: "https://placehold.co/200x200/991b1b/fff?text=Who Shot Cupid", file: "music/Who Shot Cupid - Juice WRLD.mp3" }
+          ],
+          "Legends Never Die": [
+            { title: "Already Dead", albumArt: "https://placehold.co/200x200/991b1b/fff?text=Already Dead", file: "music/Already Dead - Juice WRLD.mp3" }
+          ],
+          "Others": [
+            { title: "Hide (ft. Seezyn)", albumArt: "https://placehold.co/200x200/7f1d1d/fff?text=Hide", file: "music/Hide (feat. Seezyn) - Juice WRLD.mp3" },
+            { title: "From My Window", albumArt: "https://placehold.co/200x200/991b1b/fff?text=From My Window", file: "music/From My Window - Juice WRLD.mp3" }
+          ]
+        },
+        "Trippie Red": {
+          "A Love Letter to You 4": [
+            { title: "Blastoff (ft. Juice WRLD)", albumArt: "https://placehold.co/200x200/991b1b/fff?text=Blastoff", file: "music/Blastoff (feat. Juice WRLD) - Internet Money.mp3" }
+          ]
+        },
+        "50 Cent": {
+          "Get Rich or Die Tryin'": [
+            { title: "Many Men (Wish Death)", albumArt: "https://placehold.co/200x200/b91c1c/fff?text=Many Men", file: "music/Many Men - 50 Cent.mp3" }
+          ]
+        },
+        "Linkin Park": {
+          "Meteora": [
+            { title: "Breaking the Habit", albumArt: "https://placehold.co/200x200/b91c1c/fff?text=Breaking the Habit", file: "music/Breaking the Habit - Linkin Park.mp3" }
+          ]
+        }
       };
 
       const player = document.getElementById('player');
       const artistList = document.getElementById('artist-list');
+      const albumList = document.getElementById('album-list');
       const songList = document.getElementById('song-list');
       const search = document.getElementById('search-bar');
       const emptyMsg = document.getElementById('empty-msg');
@@ -169,6 +153,7 @@
       const volIcon = document.getElementById('vol-icon');
 
       let currentArtist = null;
+      let currentAlbum = null;
       let songs = [];
       let index = -1, playing = false;
 
@@ -181,31 +166,64 @@
             <ion-icon name="person-circle-outline" class="text-6xl text-red-600 mb-3"></ion-icon>
             <h3 class="text-lg font-bold text-white">${artist}</h3>
           `;
-          div.addEventListener('click', () => showSongs(artist));
+          div.addEventListener('click', () => showAlbums(artist));
           artistList.appendChild(div);
         });
       }
 
-      function showSongs(artist) {
+      function showAlbums(artist) {
         currentArtist = artist;
-        songs = library[artist];
         artistList.classList.add('hidden');
-        songList.classList.remove('hidden');
+        albumList.classList.remove('hidden');
         backBtn.classList.remove('hidden');
+        search.placeholder = "Search albums...";
+        renderAlbums();
+      }
+
+      function renderAlbums() {
+        albumList.innerHTML = '';
+        Object.keys(library[currentArtist]).forEach((album, i) => {
+          const div = document.createElement('div');
+          div.className = `bg-zinc-900 p-6 rounded-lg border-2 border-transparent hover:border-red-600 transition cursor-pointer text-center intro-animate intro-delay-${i+2}`;
+          div.innerHTML = `
+            <ion-icon name="disc-outline" class="text-6xl text-red-600 mb-3"></ion-icon>
+            <h3 class="text-lg font-bold text-white">${album}</h3>
+          `;
+          div.addEventListener('click', () => showSongs(album));
+          albumList.appendChild(div);
+        });
+      }
+
+      function showSongs(album) {
+        currentAlbum = album;
+        songs = library[currentArtist][album];
+        albumList.classList.add('hidden');
+        songList.classList.remove('hidden');
         search.placeholder = "Search songs...";
         renderSongs();
       }
 
       backBtn.addEventListener('click', () => {
-        songList.classList.add('hidden');
-        backBtn.classList.add('hidden');
-        artistList.classList.remove('hidden');
+        if (songList.classList.contains('hidden') && albumList.classList.contains('hidden')) {
+          // Going back from artists screen
+          backBtn.classList.add('hidden');
+        } else if (!songList.classList.contains('hidden')) {
+          // Going back from songs to albums
+          songList.classList.add('hidden');
+          albumList.classList.remove('hidden');
+          search.placeholder = "Search albums...";
+        } else if (!albumList.classList.contains('hidden')) {
+          // Going back from albums to artists
+          albumList.classList.add('hidden');
+          artistList.classList.remove('hidden');
+          backBtn.classList.add('hidden');
+          search.placeholder = "Search artists...";
+        }
         emptyMsg.classList.add('hidden');
         songs = [];
+        currentAlbum = null;
         currentArtist = null;
-        search.placeholder = "Search artists...";
         search.value = "";
-        renderArtists();
         refreshPlayer();
       });
 
@@ -218,12 +236,9 @@
           div.innerHTML = `
             <div class="relative">
               <img src="${s.albumArt}" alt="${s.title}" class="w-full rounded-md shadow mb-3">
-              <button class="absolute bottom-2 right-2 bg-red-600 p-3 rounded-full opacity-0 group-hover:opacity-100 transition hover:scale-110">
-                <ion-icon name="play" class="text-2xl text-black"></ion-icon>
-              </button>
             </div>
             <h4 class="font-bold text-white truncate mt-2">${s.title}</h4>
-            <p class="text-sm text-gray-400">${currentArtist}</p>`;
+            <p class="text-sm text-gray-400">${currentArtist} • ${currentAlbum}</p>`;
           div.addEventListener('click', () => startSong(i));
           songList.appendChild(div);
         });
@@ -251,7 +266,7 @@
         if (index !== -1 && songs.length > 0) {
           cover.src = songs[index].albumArt;
           titleEl.textContent = songs[index].title;
-          artistEl.textContent = currentArtist;
+          artistEl.textContent = `${currentArtist} • ${currentAlbum}`;
           playBtn.disabled = false;
         } else playBtn.disabled = true;
         prevBtn.disabled = index <= 0;
@@ -273,6 +288,13 @@
 
         if (!currentArtist) {
           Array.from(artistList.children).forEach(card => {
+            const name = card.querySelector("h3").textContent.toLowerCase();
+            const visible = name.includes(term);
+            card.style.display = visible ? 'block' : 'none';
+            if (visible) found = true;
+          });
+        } else if (!currentAlbum) {
+          Array.from(albumList.children).forEach(card => {
             const name = card.querySelector("h3").textContent.toLowerCase();
             const visible = name.includes(term);
             card.style.display = visible ? 'block' : 'none';
@@ -314,12 +336,4 @@
       volume.addEventListener('input', e => player.volume = e.target.value);
       player.addEventListener('volumechange', () => {
         const v = player.volume;
-        volIcon.name = v === 0 ? 'volume-off-outline' : v < .5 ? 'volume-low-outline' : 'volume-medium-outline';
-      });
-
-      renderArtists();
-      refreshPlayer();
-    });
-  </script>
-</body>
-</html>
+        volIcon.name = v === 0 ? 'volume-off-outline' : v < .5 ? 'volume-low-outline' : 'volume-medium-o
