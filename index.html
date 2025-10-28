@@ -44,7 +44,16 @@
       <div class="mt-6 max-w-lg mx-auto intro-animate intro-delay-3">
         <input id="search-bar" type="search" placeholder="Search artists..." class="w-full px-4 py-2 bg-zinc-800 text-white border-2 border-zinc-700 rounded-full focus:outline-none focus:border-red-600 transition-colors">
       </div>
-    </header>
+
+      <div id="playlist-panel" class="mt-6 text-left intro-animate intro-delay-4">
+        <h2 class="text-xl font-bold text-red-500 mb-2">My Playlists</h2>
+        <div id="playlists-container" class="flex flex-wrap gap-2 mb-3">
+          </div>
+        <button id="new-playlist-btn" class="text-sm px-3 py-1 bg-zinc-700 text-white rounded-full hover:bg-zinc-600 transition">
+          + New Playlist
+        </button>
+      </div>
+      </header>
 
     <section id="artist-list" class="grid grid-cols-1 md:grid-cols-3 gap-6"></section>
     <main id="song-list" class="grid grid-cols-1 md:grid-cols-3 gap-6 hidden"></main>
@@ -52,7 +61,10 @@
     <div class="text-center mt-6 hidden" id="back-btn">
       <button class="px-4 py-2 bg-red-600 text-black rounded-full hover:bg-red-700 transition">⬅ Back to Artists</button>
     </div>
-
+    
+    <div class="text-center mt-6 hidden" id="back-to-library-btn">
+      <button class="px-4 py-2 bg-zinc-700 text-white rounded-full hover:bg-zinc-600 transition">⬅ Back to Library</button>
+    </div>
     <div id="empty-msg" class="text-center text-gray-400 mt-8 hidden">
       <p class="text-xl">No results found</p>
       <p>We’ll try to add it soon :)</p>
@@ -93,31 +105,37 @@
 
   <script>
     document.addEventListener('DOMContentLoaded', () => {
+      // ⚠️ Library structure updated to include 'artist' property in each song object
       const library = {
         "Juice WRLD": [
           { 
             title: "Hide (ft. Seezyn)", 
             albumArt: "https://placehold.co/200x200/7f1d1d/fff?text=Hide", 
+            artist: "Juice WRLD",
             file: "music/Hide (feat. Seezyn) - Juice WRLD.mp3" 
           },
           { 
             title: "Fast", 
             albumArt: "https://placehold.co/200x200/991b1b/fff?text=Fast", 
+            artist: "Juice WRLD",
             file: "music/ - Fast - Juice WRLD.mp3" 
           },
           {
             title: "Already Dead",
             albumArt: "https://placehold.co/200x200/991b1b/fff?text=Already Dead",
+            artist: "Juice WRLD",
             file: "music/Already Dead - Juice WRLD.mp3"
           },
           {
             title: "From My Window",
             albumArt: "https://placehold.co/200x200/991b1b/fff?text=From My Window",
+            artist: "Juice WRLD",
             file: "music/SpotiDownloader.com - From My Window - Juice WRLD.mp3"
           },
           {
             title: "Who Shot Cupid",
             albumArt: "https://placehold.co/200x200/991b1b/fff?text=Who Shot Cupid",
+            artist: "Juice WRLD",
             file: "music/ Who Shot Cupid_  Juice WRLD.mp3"
           },
         ],
@@ -125,6 +143,7 @@
           { 
             title: "Blastoff (ft. Juice WRLD)", 
             albumArt: "https://placehold.co/200x200/991b1b/fff?text=Blastoff", 
+            artist: "Trippie Red",
             file: "music/Blastoff (feat. Juice WRLD) - Internet Money.mp3" 
           }
         ],
@@ -132,6 +151,7 @@
           { 
             title: "Many Men (Wish Death)", 
             albumArt: "https://placehold.co/200x200/b91c1c/fff?text=Many Men (Wish Death)", 
+            artist: "50 Cent",
             file: "music/- Many Men _Wish Death_ - 50 Cent.mp3" 
           }
         ],
@@ -139,13 +159,15 @@
           {
             title: "Breaking the Habit",
             albumArt: "https://placehold.co/200x200/b91c1c/fff?text=Breaking the Habit",
+            artist: "Linkin Park",
             file: "music/SpotiDown.App - Breaking the Habit - Linkin Park.mp3"
           }
         ],
         "Tool": [
           {
-            title: "H.",
+            title: "H.", // 🟢 FIX APPLIED
             albumArt: "https://placehold.co/200x200/b91c1c/fff?text=H.",
+            artist: "Tool",
             file: "music/SpotiDown.App - H. - TOOL.mp3"
           }
         ],
@@ -157,6 +179,7 @@
       const search = document.getElementById('search-bar');
       const emptyMsg = document.getElementById('empty-msg');
       const backBtn = document.getElementById('back-btn');
+      const backToLibraryBtn = document.getElementById('back-to-library-btn'); // New button
 
       const playBtn = document.getElementById('play');
       const playIcon = document.getElementById('play-icon');
@@ -175,9 +198,106 @@
       const volume = document.getElementById('volume');
       const volIcon = document.getElementById('vol-icon');
 
+      // --- PLAYLIST VARIABLES ---
+      const playlistsContainer = document.getElementById('playlists-container');
+      const newPlaylistBtn = document.getElementById('new-playlist-btn');
+      let userPlaylists = {}; // Object to store all playlists (e.g., { "Workout": [song1, song2], ... })
+      let currentPlaylistName = null;
+      // --- END PLAYLIST VARIABLES ---
+
       let currentArtist = null;
-      let songs = [];
+      let songs = []; // This is the currently visible list (artist's songs or playlist's songs)
       let index = -1, playing = false;
+      
+      // ----------------------------------------------------
+      // PLAYLIST PERSISTENCE FUNCTIONS
+      // ----------------------------------------------------
+
+      function loadPlaylists() {
+        try {
+          const saved = localStorage.getItem('lockdownMusicPlaylists');
+          userPlaylists = saved ? JSON.parse(saved) : {};
+        } catch (e) {
+          console.error("Could not load playlists from localStorage", e);
+          userPlaylists = {};
+        }
+      }
+
+      function savePlaylists() {
+        try {
+          localStorage.setItem('lockdownMusicPlaylists', JSON.stringify(userPlaylists));
+        } catch (e) {
+          console.error("Could not save playlists to localStorage", e);
+        }
+      }
+
+      function renderPlaylists() {
+        playlistsContainer.innerHTML = '';
+        Object.keys(userPlaylists).forEach(name => {
+          const btn = document.createElement('button');
+          btn.className = 'text-sm px-3 py-1 bg-red-600 text-black rounded-full hover:bg-red-700 transition playlist-btn';
+          btn.textContent = `${name} (${userPlaylists[name].length})`;
+          btn.dataset.name = name;
+          btn.addEventListener('click', () => loadPlaylist(name));
+          
+          const deleteBtn = document.createElement('ion-icon');
+          deleteBtn.name = 'close-circle';
+          deleteBtn.className = 'text-xs ml-1 cursor-pointer hover:text-white';
+          deleteBtn.addEventListener('click', (e) => {
+            e.stopPropagation(); // Prevent the parent button from loading the playlist
+            deletePlaylist(name);
+          });
+
+          btn.appendChild(deleteBtn);
+          playlistsContainer.appendChild(btn);
+        });
+      }
+
+      function createNewPlaylist() {
+        const name = prompt("Enter a name for your new playlist:");
+        if (name && name.trim() !== "") {
+          const cleanName = name.trim();
+          if (userPlaylists[cleanName]) {
+            alert("A playlist with that name already exists!");
+            return;
+          }
+          userPlaylists[cleanName] = [];
+          savePlaylists();
+          renderPlaylists();
+        }
+      }
+      
+      function deletePlaylist(name) {
+          if (confirm(`Are you sure you want to delete the playlist "${name}"?`)) {
+              delete userPlaylists[name];
+              savePlaylists();
+              renderPlaylists();
+              
+              if (currentPlaylistName === name) {
+                  // If the deleted playlist was the one currently loaded, go back to artists
+                  backToLibraryBtn.click(); 
+              }
+          }
+      }
+
+      function loadPlaylist(name) {
+        currentPlaylistName = name;
+        currentArtist = name; // Use playlist name as the "artist" for display
+        songs = userPlaylists[name] || [];
+
+        artistList.classList.add('hidden');
+        songList.classList.remove('hidden');
+        backBtn.classList.add('hidden'); // Hide Artist Back
+        backToLibraryBtn.classList.remove('hidden'); // Show Library Back
+        emptyMsg.classList.add('hidden');
+        search.value = ""; // Clear search bar
+        search.placeholder = `Search songs in ${name}...`;
+        renderSongs(true); // Render songs, allowing removal
+      }
+      
+      // ----------------------------------------------------
+      // VIEW/NAVIGATION FUNCTIONS
+      // ----------------------------------------------------
 
       function renderArtists() {
         artistList.innerHTML = '';
@@ -195,15 +315,21 @@
 
       function showSongs(artist) {
         currentArtist = artist;
+        currentPlaylistName = null; // We are in the library, not a playlist
         songs = library[artist];
+        
         artistList.classList.add('hidden');
         songList.classList.remove('hidden');
-        backBtn.classList.remove('hidden');
+        backBtn.classList.remove('hidden'); // Show Artist Back
+        backToLibraryBtn.classList.add('hidden'); // Hide Library Back
+        emptyMsg.classList.add('hidden');
+        search.value = ""; // Clear search bar
         search.placeholder = "Search songs...";
-        renderSongs();
+        renderSongs(false); // Render songs, not allowing removal
       }
 
       backBtn.addEventListener('click', () => {
+        // Back to Artists from a specific Artist's songs
         songList.classList.add('hidden');
         backBtn.classList.add('hidden');
         artistList.classList.remove('hidden');
@@ -215,26 +341,137 @@
         renderArtists();
         refreshPlayer();
       });
+      
+      backToLibraryBtn.addEventListener('click', () => {
+        // Back to Artists from a Playlist
+        songList.classList.add('hidden');
+        backToLibraryBtn.classList.add('hidden');
+        artistList.classList.remove('hidden');
+        emptyMsg.classList.add('hidden');
+        songs = [];
+        currentArtist = null;
+        currentPlaylistName = null;
+        search.placeholder = "Search artists...";
+        search.value = "";
+        renderArtists();
+        refreshPlayer();
+      });
 
-      function renderSongs() {
+      function renderSongs(isPlaylistView) {
         songList.innerHTML = '';
         songs.forEach((s, i) => {
           const div = document.createElement('div');
-          div.className = `song-card bg-zinc-900 p-4 rounded-lg border-2 border-transparent hover:border-red-600 transition cursor-pointer intro-animate intro-delay-${i+3}`;
+          // Add 'group' class for the hover effect on the button
+          div.className = `song-card bg-zinc-900 p-4 rounded-lg border-2 border-transparent hover:border-red-600 transition cursor-pointer group intro-animate intro-delay-${i+3}`;
           div.dataset.i = i;
+          
+          let actionButton;
+          if (isPlaylistView) {
+              // Action button to REMOVE song from playlist
+              actionButton = `<button class="remove-btn absolute bottom-2 right-2 bg-zinc-700 p-3 rounded-full opacity-0 group-hover:opacity-100 transition hover:scale-110">
+                  <ion-icon name="remove" class="text-2xl text-white"></ion-icon>
+              </button>`;
+          } else {
+              // Action button to ADD song to playlist
+              actionButton = `<button class="add-btn absolute bottom-2 right-2 bg-red-600 p-3 rounded-full opacity-0 group-hover:opacity-100 transition hover:scale-110">
+                  <ion-icon name="add-circle-outline" class="text-2xl text-black"></ion-icon>
+              </button>`;
+          }
+          
+          // Use the stored artist property for accurate display in both views
+          const displayArtist = s.artist || currentArtist;
+
           div.innerHTML = `
             <div class="relative">
               <img src="${s.albumArt}" alt="${s.title}" class="w-full rounded-md shadow mb-3">
-              <button class="absolute bottom-2 right-2 bg-red-600 p-3 rounded-full opacity-0 group-hover:opacity-100 transition hover:scale-110">
-                <ion-icon name="play" class="text-2xl text-black"></ion-icon>
-              </button>
+              ${actionButton}
             </div>
             <h4 class="font-bold text-white truncate mt-2">${s.title}</h4>
-            <p class="text-sm text-gray-400">${currentArtist}</p>`;
-          div.addEventListener('click', () => startSong(i));
+            <p class="text-sm text-gray-400">${displayArtist}</p>`;
+            
+          div.addEventListener('click', (e) => {
+              // If the click was on the button, don't start the song
+              if (e.target.closest('.add-btn') || e.target.closest('.remove-btn')) return;
+              startSong(i);
+          });
+          
+          if (isPlaylistView) {
+              div.querySelector('.remove-btn').addEventListener('click', () => removeSongFromPlaylist(i));
+          } else {
+              // Note: For songs from the library, we need the full song object which includes the 'artist'
+              div.querySelector('.add-btn').addEventListener('click', () => showPlaylistPicker(library[currentArtist][i]));
+          }
+
           songList.appendChild(div);
         });
+        
+        if (songs.length === 0) {
+            emptyMsg.classList.remove('hidden');
+            emptyMsg.querySelector('p:first-child').textContent = isPlaylistView ? "This playlist is empty." : "No results found";
+        } else {
+            emptyMsg.classList.add('hidden');
+        }
       }
+      
+      function showPlaylistPicker(song) {
+          const playlistNames = Object.keys(userPlaylists);
+          if (playlistNames.length === 0) {
+              alert("You don't have any playlists yet. Click '+ New Playlist' to create one!");
+              return;
+          }
+          
+          const choice = prompt(`Add "${song.title}" to which playlist?\n\nOptions:\n${playlistNames.join('\n')}`);
+          if (choice && userPlaylists[choice]) {
+              addSongToPlaylist(song, choice);
+          } else if (choice) {
+              alert(`Playlist "${choice}" not found.`);
+          }
+      }
+
+      function addSongToPlaylist(song, playlistName) {
+          const playlist = userPlaylists[playlistName];
+          // Simple check to prevent duplicates based on title and artist
+          const isDuplicate = playlist.some(s => s.title === song.title && s.artist === song.artist);
+          
+          if (isDuplicate) {
+              alert(`"${song.title}" is already in "${playlistName}".`);
+              return;
+          }
+          
+          playlist.push(song);
+          savePlaylists();
+          renderPlaylists();
+          alert(`Added "${song.title}" to "${playlistName}"!`);
+      }
+      
+      function removeSongFromPlaylist(songIndex) {
+          if (!currentPlaylistName) return;
+          
+          const songTitle = songs[songIndex].title;
+          if (confirm(`Remove "${songTitle}" from playlist "${currentPlaylistName}"?`)) {
+              songs.splice(songIndex, 1); // Remove from current displayed list
+              userPlaylists[currentPlaylistName] = songs; // Update the source
+              savePlaylists();
+              renderPlaylists();
+              
+              const wasPlaying = (index === songIndex);
+              
+              if (wasPlaying) {
+                  player.pause();
+                  index = -1;
+              } else if (index > songIndex) {
+                  // Adjust index if the removed song was before the current song
+                  index--;
+              }
+              
+              renderSongs(true); // Re-render the playlist view
+              refreshPlayer();
+          }
+      }
+
+      // ----------------------------------------------------
+      // PLAYER CONTROL FUNCTIONS 
+      // ----------------------------------------------------
 
       function startSong(i) {
         if (i < 0 || i >= songs.length) return;
@@ -248,6 +485,7 @@
 
       function togglePlay() {
         if (index === -1 && songs.length > 0) return startSong(0);
+        if (index === -1) return; // Cannot play if no song is selected
         playing ? player.pause() : player.play();
         playing = !playing;
         refreshPlayer();
@@ -258,9 +496,15 @@
         if (index !== -1 && songs.length > 0) {
           cover.src = songs[index].albumArt;
           titleEl.textContent = songs[index].title;
-          artistEl.textContent = currentArtist;
+          // Use the stored artist property for accurate display
+          artistEl.textContent = songs[index].artist; 
           playBtn.disabled = false;
-        } else playBtn.disabled = true;
+        } else {
+            cover.src = "https://placehold.co/64x64/1f2937/4b5563?text=...";
+            titleEl.textContent = "Pick a song";
+            artistEl.textContent = "...";
+            playBtn.disabled = true;
+        }
         prevBtn.disabled = index <= 0;
         nextBtn.disabled = index >= songs.length - 1;
 
@@ -277,8 +521,11 @@
       function searchHandler() {
         const term = search.value.toLowerCase();
         let found = false;
+        
+        const currentView = (currentArtist && !library[currentArtist]) ? 'playlist' : currentArtist ? 'songs' : 'artists';
 
-        if (!currentArtist) {
+        if (currentView === 'artists') {
+          // Search Artists
           Array.from(artistList.children).forEach(card => {
             const name = card.querySelector("h3").textContent.toLowerCase();
             const visible = name.includes(term);
@@ -286,21 +533,29 @@
             if (visible) found = true;
           });
         } else {
+          // Search Songs (Artist View or Playlist View)
           songs.forEach((s, i) => {
             const card = songList.children[i];
-            const visible = s.title.toLowerCase().includes(term);
+            // Search by title or artist (artist is stored in the song object)
+            const visible = s.title.toLowerCase().includes(term) || (s.artist && s.artist.toLowerCase().includes(term));
             card.style.display = visible ? 'block' : 'none';
             if (visible) found = true;
           });
         }
 
         emptyMsg.style.display = found ? 'none' : 'block';
+        emptyMsg.querySelector('p:first-child').textContent = "No results found";
       }
+
+      // ----------------------------------------------------
+      // EVENT LISTENERS AND INITIALIZATION
+      // ----------------------------------------------------
 
       playBtn.addEventListener('click', togglePlay);
       nextBtn.addEventListener('click', () => startSong(index+1));
       prevBtn.addEventListener('click', () => startSong(index-1));
       search.addEventListener('input', searchHandler);
+      newPlaylistBtn.addEventListener('click', createNewPlaylist);
 
       player.addEventListener('timeupdate', () => {
         if (!player.duration) return;
@@ -324,6 +579,9 @@
         volIcon.name = v === 0 ? 'volume-off-outline' : v < .5 ? 'volume-low-outline' : 'volume-medium-outline';
       });
 
+      // Initialization
+      loadPlaylists();
+      renderPlaylists();
       renderArtists();
       refreshPlayer();
     });
